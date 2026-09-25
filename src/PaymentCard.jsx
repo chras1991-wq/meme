@@ -34,7 +34,7 @@ export default function PaymentCard({ copy }) {
 
   async function ensureChain() {
     if (!window.ethereum) {
-      throw new Error("No wallet detected. Install MetaMask or another BSC wallet.");
+      throw new Error(copy.noWallet);
     }
     const chainId = await window.ethereum.request({ method: "eth_chainId" });
     if (Number(chainId) !== CHAIN_ID) {
@@ -55,7 +55,7 @@ export default function PaymentCard({ copy }) {
       setAccount(accounts[0] ?? "");
     } catch (error) {
       setStatusKind("error");
-      setStatus(error instanceof Error ? error.message : "Wallet connection failed.");
+      setStatus(error instanceof Error ? error.message : copy.connectFailed);
     }
   }
 
@@ -74,11 +74,11 @@ export default function PaymentCard({ copy }) {
         nextAccount = accounts[0] ?? "";
         setAccount(nextAccount);
       }
-      if (!nextAccount) throw new Error("Connect a wallet before paying.");
+      if (!nextAccount) throw new Error(copy.connectBeforePay);
 
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) {
-        throw new Error("Enter a valid USDT amount.");
+        throw new Error(copy.invalidAmount);
       }
 
       await ensureChain();
@@ -103,11 +103,11 @@ export default function PaymentCard({ copy }) {
         data,
       });
       setStatusKind("success");
-      setStatus(`Submitted ${formatUnits(parsed, decimals)} USDT. Tx: ${hash}`);
+      setStatus(`${copy.submitted} ${formatUnits(parsed, decimals)} USDT. Tx: ${hash}`);
       setAccount(nextAccount);
     } catch (error) {
       setStatusKind("error");
-      setStatus(error instanceof Error ? error.message : "Payment failed.");
+      setStatus(error instanceof Error ? error.message : copy.paymentFailed);
     } finally {
       setPending(false);
     }
@@ -146,7 +146,7 @@ export default function PaymentCard({ copy }) {
       {status ? (
         <div className={`payment-status ${statusKind === "success" ? "success" : ""}`}>
           <span>{status}</span>
-          {statusKind === "success" && status.startsWith("Submitted") ? (
+          {statusKind === "success" && status.includes("Tx: ") ? (
             <a
               href={`https://bscscan.com/tx/${status.split("Tx: ")[1]}`}
               target="_blank"
